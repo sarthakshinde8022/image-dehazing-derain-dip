@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.Python
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Datasets (too large for git — download instructions in README)
+SOTS/
+data/
+datasets/
+
+# Model weights (too large for git)
+*.pth
+*.h5
+*.pt
+
+# Streamlit secrets
+.streamlit/secrets.toml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Generated outputs (regenerate via evaluate_sots.py)
+samples_indoor/
+samples_outdoor/
