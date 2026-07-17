@@ -1,109 +1,100 @@
 """
-Streamlit demo app for Image Dehazing (Dark Channel Prior).
+Shared visual theme for the DIP mini project app.
+Call inject_custom_css() near the top of every page, right after
+st.set_page_config().
 
-Run locally with:
-    streamlit run app.py
+Design concept ("Clarity"): the visual language of haze lifting to
+reveal a clear scene. A deep atmospheric navy grounds the page; a cool
+teal marks the moment of restoration; warm gold is used sparingly for
+emphasis, like sun breaking through.
 """
 
-import io
-
-import cv2
-import numpy as np
 import streamlit as st
-from PIL import Image
-from skimage.metrics import peak_signal_noise_ratio as psnr
-from skimage.metrics import structural_similarity as ssim
 
-from dehazing.dark_channel_prior import dehaze
+BG_DEEP = "#0F1620"
+BG_PANEL = "#1B2430"
+FOG = "#8FA3B0"
+CLARITY = "#4FD1C5"
+SUNBREAK = "#E3B23C"
+TEXT_PRIMARY = "#EAF2F5"
+TEXT_MUTED = "#93A5B1"
 
-st.set_page_config(page_title="Dehazing & Rain Streak Removal", layout="wide")
 
-st.title("🌫️ Image Dehazing — Dark Channel Prior Demo")
-st.caption(
-    "Mini project: Image Dehazing and Rain Streak Removal using DIP Techniques"
-)
+def inject_custom_css():
+    st.markdown(
+        f"""
+        <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
-tab_dehaze, tab_derain = st.tabs(["Dehazing", "Rain Streak Removal (coming soon)"])
+        html, body, [class*="css"] {{
+            font-family: 'IBM Plex Sans', sans-serif;
+        }}
 
-with tab_dehaze:
-    with st.sidebar:
-        st.header("Dark Channel Prior Parameters")
-        patch_size = st.slider("Patch size", min_value=3, max_value=31, value=15, step=2)
-        omega = st.slider("Omega (haze retention)", 0.50, 1.00, 0.95, 0.01)
-        t0 = st.slider("Min transmission (t0)", 0.01, 0.50, 0.10, 0.01)
-        guided_radius = st.slider("Guided filter radius", 10, 80, 40, 5)
-        st.markdown("---")
-        st.markdown(
-            "Tip: lower **t0** recovers more detail in heavily hazed regions "
-            "but can amplify noise. Higher **omega** removes more haze but "
-            "can look unnatural."
-        )
+        h1, h2, h3 {{
+            font-family: 'Space Grotesk', sans-serif !important;
+            letter-spacing: -0.01em;
+        }}
 
-    col_upload1, col_upload2 = st.columns(2)
-    with col_upload1:
-        uploaded_file = st.file_uploader(
-            "Upload a hazy image", type=["jpg", "jpeg", "png"], key="hazy"
-        )
-    with col_upload2:
-        gt_file = st.file_uploader(
-            "Optional: upload ground-truth clean image (for PSNR/SSIM)",
-            type=["jpg", "jpeg", "png"],
-            key="gt",
-        )
+        code {{
+            font-family: 'IBM Plex Mono', monospace !important;
+        }}
 
-    if uploaded_file is not None:
-        image = Image.open(uploaded_file).convert("RGB")
-        img_array = np.array(image)
-        img_bgr = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
+        #MainMenu {{visibility: hidden;}}
+        footer {{visibility: hidden;}}
 
-        with st.spinner("Running Dark Channel Prior dehazing..."):
-            result_bgr = dehaze(
-                img_bgr,
-                patch_size=patch_size,
-                omega=omega,
-                t0=t0,
-                guided_radius=guided_radius,
-            )
-        result_rgb = cv2.cvtColor(result_bgr, cv2.COLOR_BGR2RGB)
+        .clarity-divider {{
+            height: 3px;
+            border: none;
+            border-radius: 2px;
+            margin: 1.75rem 0;
+            background: linear-gradient(90deg, {FOG} 0%, {CLARITY} 60%, {SUNBREAK} 100%);
+            opacity: 0.85;
+        }}
 
-        col1, col2 = st.columns(2)
-        with col1:
-            st.subheader("Original (Hazy)")
-            st.image(image, use_container_width=True)
-        with col2:
-            st.subheader("Dehazed")
-            st.image(result_rgb, use_container_width=True)
+        .eyebrow {{
+            font-family: 'IBM Plex Mono', monospace;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            font-size: 0.75rem;
+            color: {CLARITY};
+            margin-bottom: 0.25rem;
+        }}
 
-        # Download button
-        result_pil = Image.fromarray(result_rgb)
-        buf = io.BytesIO()
-        result_pil.save(buf, format="PNG")
-        st.download_button(
-            "Download dehazed image",
-            data=buf.getvalue(),
-            file_name="dehazed.png",
-            mime="image/png",
-        )
+        .stage-card {{
+            background: {BG_PANEL};
+            border: 1px solid rgba(143, 163, 176, 0.25);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            height: 100%;
+            transition: transform 0.15s ease, border-color 0.15s ease;
+        }}
+        .stage-card:hover {{
+            transform: translateY(-2px);
+            border-color: rgba(79, 209, 197, 0.5);
+        }}
+        @media (prefers-reduced-motion: reduce) {{
+            .stage-card {{ transition: none; }}
+            .stage-card:hover {{ transform: none; }}
+        }}
 
-        # Metrics if ground truth provided
-        if gt_file is not None:
-            gt_image = Image.open(gt_file).convert("RGB")
-            gt_array = np.array(gt_image)
-            if gt_array.shape[:2] != result_rgb.shape[:2]:
-                gt_array = cv2.resize(
-                    gt_array, (result_rgb.shape[1], result_rgb.shape[0])
-                )
-            p = psnr(gt_array, result_rgb, data_range=255)
-            s = ssim(gt_array, result_rgb, data_range=255, channel_axis=2)
-            st.markdown("### Metrics vs. ground truth")
-            m1, m2 = st.columns(2)
-            m1.metric("PSNR", f"{p:.2f} dB")
-            m2.metric("SSIM", f"{s:.4f}")
-    else:
-        st.info("Upload a hazy image above to see the dehazing result.")
+        .stage-number {{
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: {CLARITY};
+        }}
 
-with tab_derain:
-    st.info(
-        "Rain streak removal module will be added here once implemented "
-        "(guided-filter frequency decomposition + light CNN refinement)."
+        .badge {{
+            display: inline-block;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.75rem;
+            padding: 0.25rem 0.65rem;
+            border-radius: 999px;
+            border: 1px solid rgba(79, 209, 197, 0.4);
+            color: {CLARITY};
+            margin: 0 0.35rem 0.35rem 0;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True,
     )
