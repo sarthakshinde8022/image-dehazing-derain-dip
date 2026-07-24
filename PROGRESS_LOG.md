@@ -22,3 +22,17 @@ foundation for the project.
 
 **The core idea:**
 The atmospheric scattering model describes a hazy image as:
+I(x) = J(x)·t(x) + A·(1 − t(x))
+where `I` is what the camera sees, `J` is the true clean scene, `A` is
+atmospheric light, and `t` is the transmission — how much of the original
+light survives the haze. Dehazing means estimating `A` and `t`, then
+solving for `J`. The Dark Channel Prior estimates `t` from the observation
+that haze-free outdoor patches almost always have at least one very dark
+color channel somewhere — so wherever the image isn't "dark enough," that's
+a sign of haze.
+
+**Result:** Working end-to-end demo — upload a hazy photo, see it dehazed
+in real time, download the result.
+
+**Next (Week 2):** Quantitative evaluation — run this pipeline across the
+full SOTS benchmark and report PSNR/SSIM, indoor vs. outdoor.
