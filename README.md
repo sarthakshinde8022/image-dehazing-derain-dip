@@ -161,11 +161,16 @@ at app startup.
 
 ## 10. Roadmap
 
-- [x] Classical dehazing — Dark Channel Prior + guided filter refinement
-- [x] SOTS evaluation pipeline (PSNR/SSIM)
-- [x] Streamlit demo app
-- [ ] Classical rain streak removal (frequency decomposition)
-- [ ] AOD-Net (lightweight CNN dehazing) trained on ITS/OTS
-- [ ] Lightweight CNN deraining module
-- [ ] Combined dehazing + deraining pipeline
-- [ ] Project report
+10-week phased plan — one demo-able milestone per week for weekly review.
+See `PROGRESS_LOG.md` for detailed weekly write-ups.
+
+- [x] **Week 1 — Classical dehazing baseline:** Dark Channel Prior + guided filter refinement, live Streamlit demo
+- [ ] **Week 2 — Dehazing evaluation:** Full SOTS benchmark (PSNR/SSIM), indoor vs outdoor comparison
+- [ ] **Week 3 — Classical rain removal:** Guided-filter frequency decomposition + streak separation
+- [ ] **Week 4 — Deraining evaluation:** Rain100L/Rain100H benchmark, live "Rain Streak Removal" tab
+- [ ] **Week 5 — Combined classical pipeline:** Deraining → dehazing chained for images with both degradations
+- [ ] **Week 6 — AOD-Net build:** Lightweight CNN architecture + training script + ITS/OTS data pipeline
+- [ ] **Week 7 — AOD-Net train & evaluate:** Classical vs. ML comparison on SOTS
+- [ ] **Week 8 — Lightweight CNN deraining:** DerainNet-style shallow CNN, classical vs. ML comparison
+- [ ] **Week 9 — Full integration:** All four methods in one app with a method selector
+- [ ] **Week 10 — Report + presentation prep:** Final report, figures, rehearsed demo walkthrough
