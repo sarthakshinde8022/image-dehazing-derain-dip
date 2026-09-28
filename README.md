@@ -165,7 +165,7 @@ at app startup.
 See `PROGRESS_LOG.md` for detailed weekly write-ups.
 
 - [x] **Week 1 — Classical dehazing baseline:** Dark Channel Prior + guided filter refinement, live Streamlit demo
-- [ ] **Week 2 — Dehazing evaluation:** Full SOTS benchmark (PSNR/SSIM), indoor vs outdoor comparison
+- [x] **Week 2 — Dehazing evaluation:** Full SOTS benchmark (PSNR/SSIM), indoor vs outdoor comparison
 - [ ] **Week 3 — Classical rain removal:** Guided-filter frequency decomposition + streak separation
 - [ ] **Week 4 — Deraining evaluation:** Rain100L/Rain100H benchmark, live "Rain Streak Removal" tab
 - [ ] **Week 5 — Combined classical pipeline:** Deraining → dehazing chained for images with both degradations
