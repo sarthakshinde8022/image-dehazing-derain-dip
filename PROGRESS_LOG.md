@@ -36,3 +36,22 @@ in real time, download the result.
 
 **Next (Week 2):** Quantitative evaluation — run this pipeline across the
 full SOTS benchmark and report PSNR/SSIM, indoor vs. outdoor.
+
+## Week 2 — Dehazing Evaluation
+
+**Objective:** Quantitatively evaluate the DCP baseline on the SOTS benchmark.
+
+**What was done:**
+- Ran `evaluation/evaluate_sots.py` on all SOTS indoor and outdoor pairs
+- Metrics: PSNR and SSIM against ground truth
+
+**Results:**
+
+| Subset | Images | Mean PSNR (dB) | Mean SSIM |
+|--------|--------|----------------|-----------|
+| Indoor | [n] | [x.xx] | [0.xxxx] |
+| Outdoor | [n] | [x.xx] | [0.xxxx] |
+
+**Observations:** [Which subset performed better and why. One failure case and its cause.]
+
+**Next (Week 3):** Classical rain streak removal (guided-filter frequency decomposition).
