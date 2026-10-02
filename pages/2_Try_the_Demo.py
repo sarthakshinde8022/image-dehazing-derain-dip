@@ -1,5 +1,5 @@
 """
-Try the Demo — interactive dehazing tool.
+Try the Demo — interactive dehazing and rain streak removal tool.
 """
 
 import io
@@ -12,6 +12,7 @@ from skimage.metrics import peak_signal_noise_ratio as psnr
 from skimage.metrics import structural_similarity as ssim
 
 from dehazing.dark_channel_prior import dehaze
+from deraining.rain_streak_removal import derain
 from theme import inject_custom_css
 
 st.set_page_config(page_title="Try the Demo — Clarity", page_icon="🌫️", layout="wide")
@@ -22,17 +23,18 @@ st.page_link("app.py", label="← Home", icon="🏠")
 st.markdown('<div class="eyebrow">LIVE DEMO</div>', unsafe_allow_html=True)
 st.markdown("# Try It")
 st.markdown(
-    '<p style="color:#93A5B1;">Upload a hazy image and watch the Dark '
-    'Channel Prior pull the scene back into focus.</p>',
+    '<p style="color:#93A5B1;">Upload a hazy or rainy image and watch the '
+    'classical DIP pipeline restore it.</p>',
     unsafe_allow_html=True,
 )
 st.markdown('<hr class="clarity-divider">', unsafe_allow_html=True)
 
-tab_dehaze, tab_derain = st.tabs(["Dehazing", "Rain Streak Removal (coming soon)"])
+tab_dehaze, tab_derain = st.tabs(["Dehazing", "Rain Streak Removal"])
 
+# ---------------------------------------------------------------- Dehazing
 with tab_dehaze:
     with st.sidebar:
-        st.markdown("### Parameters")
+        st.markdown("### Dehazing Parameters")
         patch_size = st.slider("Patch size", min_value=3, max_value=31, value=15, step=2)
         omega = st.slider("Omega (haze retention)", 0.50, 1.00, 0.95, 0.01)
         t0 = st.slider("Min transmission (t0)", 0.01, 0.50, 0.10, 0.01)
@@ -83,6 +85,7 @@ with tab_dehaze:
             data=buf.getvalue(),
             file_name="dehazed.png",
             mime="image/png",
+            key="download_dehazed",
         )
 
         if gt_file is not None:
@@ -102,8 +105,78 @@ with tab_dehaze:
     else:
         st.info("Upload a hazy image above to see the dehazing result.")
 
+# ----------------------------------------------------------- Rain Removal
 with tab_derain:
-    st.info(
-        "Rain streak removal module will be added here once implemented "
-        "(guided-filter frequency decomposition + light CNN refinement)."
-    )
+    with st.sidebar:
+        st.markdown("### Rain Removal Parameters")
+        derain_radius = st.slider(
+            "Blur radius (base layer)", 5, 41, 15, 2, key="derain_radius"
+        )
+        max_streak_width = st.slider(
+            "Max streak width (px)", 1, 15, 5, 1, key="max_streak_width"
+        )
+        st.caption(
+            "Any bright structure narrower than this, in the horizontal "
+            "direction, is treated as a rain streak."
+        )
+
+    col_upload3, col_upload4 = st.columns(2)
+    with col_upload3:
+        rainy_file = st.file_uploader(
+            "Upload a rainy image", type=["jpg", "jpeg", "png"], key="rainy"
+        )
+    with col_upload4:
+        gt_rain_file = st.file_uploader(
+            "Optional: ground-truth clean image (for PSNR/SSIM)",
+            type=["jpg", "jpeg", "png"],
+            key="gt_rain",
+        )
+
+    if rainy_file is not None:
+        rainy_image = Image.open(rainy_file).convert("RGB")
+        rainy_array = np.array(rainy_image)
+        rainy_bgr = cv2.cvtColor(rainy_array, cv2.COLOR_RGB2BGR)
+
+        with st.spinner("Isolating and removing rain streaks..."):
+            derained_bgr = derain(
+                rainy_bgr,
+                radius=derain_radius,
+                max_streak_width=max_streak_width,
+            )
+        derained_rgb = cv2.cvtColor(derained_bgr, cv2.COLOR_BGR2RGB)
+
+        col3, col4 = st.columns(2)
+        with col3:
+            st.markdown('<div class="eyebrow">BEFORE</div>', unsafe_allow_html=True)
+            st.image(rainy_image, use_container_width=True)
+        with col4:
+            st.markdown('<div class="eyebrow">AFTER</div>', unsafe_allow_html=True)
+            st.image(derained_rgb, use_container_width=True)
+
+        derained_pil = Image.fromarray(derained_rgb)
+        buf2 = io.BytesIO()
+        derained_pil.save(buf2, format="PNG")
+        st.download_button(
+            "Download derained image",
+            data=buf2.getvalue(),
+            file_name="derained.png",
+            mime="image/png",
+            key="download_derained",
+        )
+
+        if gt_rain_file is not None:
+            gt_rain_image = Image.open(gt_rain_file).convert("RGB")
+            gt_rain_array = np.array(gt_rain_image)
+            if gt_rain_array.shape[:2] != derained_rgb.shape[:2]:
+                gt_rain_array = cv2.resize(
+                    gt_rain_array, (derained_rgb.shape[1], derained_rgb.shape[0])
+                )
+            p2 = psnr(gt_rain_array, derained_rgb, data_range=255)
+            s2 = ssim(gt_rain_array, derained_rgb, data_range=255, channel_axis=2)
+            st.markdown('<hr class="clarity-divider">', unsafe_allow_html=True)
+            st.markdown("### Metrics vs. ground truth")
+            m3, m4 = st.columns(2)
+            m3.metric("PSNR", f"{p2:.2f} dB")
+            m4.metric("SSIM", f"{s2:.4f}")
+    else:
+        st.info("Upload a rainy image above to see the rain streak removal result.")
