@@ -76,9 +76,9 @@ stage1, stage2, stage3 = st.columns(3)
 
 stages = [
     ("01", "Rain Streak Removal",
-     "Decompose the image into low/high-frequency layers with a guided "
-     "filter, isolate near-vertical streak patterns, and subtract them "
-     "from the detail layer."),
+     "Decompose the image into low/high-frequency layers with a Gaussian "
+     "blur, isolate thin near-vertical streaks from the detail layer with "
+     "a directional morphological top-hat, and subtract them."),
     ("02", "Haze Removal",
      "Estimate atmospheric light and a per-pixel transmission map using "
      "the Dark Channel Prior, then invert the atmospheric scattering "
